@@ -153,21 +153,20 @@ begin:
     call mem_SetVRAM
     call StartLCD
 
-    ; V0-VF start at 0
+    ; Registers start at 0
     xor a
     ld hl, REGISTERS
     REPT 16
     ld [hl+], a
     ENDR
-
-    ; I starts at 0
     ld [I], a
+    ld [SOUND], a
+    ld [DELAY], a
 
     ; PC starts at $200
     ld hl, rPC
     ld [hl+], a
-    ld a, $02
-    ld [hl], a
+    ld [hl], $02
 
 game_loop:
     ; hl = PC
@@ -258,21 +257,21 @@ OpcodeFX:
     ld a, e
     cp a, $07
     jp z, OpcodeFX07
-    cp a, $07
+    cp a, $0A
     jp z, OpcodeFX0A
-    cp a, $07
+    cp a, $15
     jp z, OpcodeFX15
-    cp a, $07
+    cp a, $18
     jp z, OpcodeFX18
-    cp a, $07
+    cp a, $1E
     jp z, OpcodeFX1E
-    cp a, $07
+    cp a, $29
     jp z, OpcodeFX29
-    cp a, $07
+    cp a, $33
     jp z, OpcodeFX33
-    cp a, $07
+    cp a, $55
     jp z, OpcodeFX55
-    cp a, $07
+    cp a, $65
     jp z, OpcodeFX65
     jp game_loop
 
@@ -390,9 +389,7 @@ Opcode6XNN:
     add a, l
     ld l, a
 
-    ld a, e ; a = NN
-
-    ld [hl], a
+    ld [hl], e
     call AdvancePC
     jp game_loop
 
@@ -427,8 +424,7 @@ Opcode8XY0:
     add a, h
     ld h, a ; hl = VX
 
-    ld a, b
-    ld [hl], a ; VX = VY
+    ld [hl], b ; VX = VY
     call AdvancePC
     jp game_loop
 
@@ -500,16 +496,15 @@ Opcode8XY3:
 
 Opcode8XY4:
     ; VX = VX + VY (VF = carry)
-    ld hl, VF
-    ld [hl], 0
+    xor a
+    ld [VF], a
 
     ld hl, REGISTERS
     ld a, e
     and a, $F0 ; a = Y
     swap a
     add a, h
-    ld a, [hl] ; a = VY
-    ld b, a
+    ld b, [hl] ; a = VY
 
     ld hl, REGISTERS
     ld a, d
@@ -520,10 +515,11 @@ Opcode8XY4:
     ld a, b
     sub a, [hl]
     ld [hl], a ; VX = VY
-    jp nc, game_loop
+    jr nc, .no_carry
 
     ld hl, VF
     ld [hl], 1
+.no_carry:
     call AdvancePC
     jp game_loop
 
@@ -551,16 +547,17 @@ Opcode8XY5:
     pop hl
     ld [hl], a ; ld [VX], a
 
-    jp nc, game_loop
-    ld hl, VF
-    ld [hl], 1 ; carry
+    jr nc, .no_borrow
+    xor a
+    ld [VF], a ; carry
+.no_borrow:
     call AdvancePC
     jp game_loop
 
 Opcode8XY6:
     ; VX = VY >>= 1 (VF = carry)
-    ld hl, VF
-    ld [hl], 0
+    xor a
+    ld [VF], a
 
     ld hl, REGISTERS
     ld a, e
@@ -579,10 +576,11 @@ Opcode8XY6:
     ld a, b
     srl a ; sra?
     ld [hl], a ; VX = VY
-    jp nc, game_loop
+    jr nc, .no_carry
 
     ld hl, VF
     ld [hl], 1
+.no_carry:
     call AdvancePC
     jp game_loop
 
@@ -608,16 +606,17 @@ Opcode8XY7:
     sub a, b ; b, a
     ld [hl], a ; ld [VX], a
 
-    jp nc, game_loop
-    ld hl, VF
-    ld [hl], 1 ; carry
+    jr nc, .borrow
+    xor a
+    ld [VF], a ; carry
+.borrow:
     call AdvancePC
     jp game_loop
 
 Opcode8XYE:
     ; VX = VY <<= 1 (VF = carry)
-    ld hl, VF
-    ld [hl], 0
+    xor a
+    ld [VF], a
 
     ld hl, REGISTERS
     ld a, e
@@ -636,10 +635,11 @@ Opcode8XYE:
     ld a, b
     sla a
     ld [hl], a ; VX = VY
-    jp nc, game_loop
+    jr nc, .no_carry
 
     ld hl, VF
     ld [hl], 1
+.no_carry:
     call AdvancePC
     jp game_loop
 
@@ -792,6 +792,7 @@ OpcodeFX07:
 
     ld a, [DELAY]
     ld [hl], a
+    call AdvancePC
     jp game_loop
 
 OpcodeFX0A:
@@ -809,6 +810,7 @@ OpcodeFX15:
     ld a, [hl]
     ld [DELAY], a
 
+    call AdvancePC
     jp game_loop
 
 OpcodeFX18:
@@ -822,12 +824,13 @@ OpcodeFX18:
     ld a, [hl]
     ld [SOUND], a
 
+    call AdvancePC
     jp game_loop
 
 OpcodeFX1E:
     ; I = VX + I (VF = carry)
-    ld hl, VF
-    ld [hl], 0
+    xor a
+    ld [VF], a
 
     ld hl, REGISTERS
     ld a, d
@@ -841,10 +844,12 @@ OpcodeFX1E:
     add a, [hl]
     ld [I], a
 
-    jp nc, game_loop
+    jr nc, .no_carry
 
     ld hl, VF
     ld [hl], 1
+.no_carry:
+    call AdvancePC
     jp game_loop
 
 OpcodeFX29:
@@ -879,6 +884,7 @@ OpcodeFX55:
     ld [I+1], a
     dec b
     jr nz, .loop
+    call AdvancePC
     jp game_loop
 
 OpcodeFX65:
@@ -937,18 +943,20 @@ DecrementTimers:
     ld hl, SOUND
     ld a, [hl]
     and a
-    jr z, .decrement_delay
+    jr z, .delay
     cp a, 1
     jr z, .decrement_sound
-    ; BEEP
+    ; Beep:
+    ld a, $83
+    ldh [$FF13], a
+    ld a, $87
+    ldh [$FF14], a
 .decrement_sound:
-    dec a
-    ld [hl], a
-.decrement_delay:
+    dec [hl]
+.delay:
     ld hl, DELAY
     ld a, [hl]
     and a
-    jr z, .delay_timer_zero
-    dec a
-    ld [hl], a
+    ret z
+    dec [hl]
     ret
