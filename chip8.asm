@@ -674,7 +674,7 @@ OpcodeANNN:
     and a, $0F
 
     ld hl, I
-    ld [hl], d
+    ld [hl], a
     inc hl
     ld [hl], e
 
