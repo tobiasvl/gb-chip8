@@ -14,28 +14,8 @@ SECTION    "Serial",ROM0[$0058]
 SECTION    "p1thru4",ROM0[$0060]
     reti
 
-SECTION "FreeSpace",ROM0[$0068]
-INCLUDE "memory.inc"
-
-wait_vblank:
-    halt
-    ret
-
-StartLCD:
-    ld a, LCDCF_ON|LCDCF_BG8000|LCDCF_BG9800|LCDCF_BGON|LCDCF_OBJ8|LCDCF_OBJON
-    ld [rLCDC], a
-    ret
-
-StopLCD:
-    ld a, [rLCDC]
-    rlca                ; Put the high bit of LCDC into the Carry flag
-    ret nc              ; Screen is off already. Exit.
-    call wait_vblank
-; Turn off the LCD
-    ld a, [rLCDC]
-    res 7, a            ; Reset bit 7 of LCDC
-    ld [rLCDC], a
-    ret
+SECTION "FontSprites",ROM0[$0068]
+INCLUDE "font.inc"
 
 SECTION    "start",ROM0[$0100]
 nop
@@ -863,7 +843,21 @@ OpcodeFX1E:
     jp game_loop
 
 OpcodeFX29:
-    ; TODO I = sprite_addr[VX]
+    ; I = sprite_addr[VX]
+    ld hl, REGISTERS
+    ld a, d
+    and a, $0F ; a = X
+    add a, h   ; hl = VX
+    ld h, a
+    ld a, [hl] ; a = [VX]
+
+    ld hl, Font
+    add a, h
+
+    ld [I+1], a
+    ld a, l
+    ld [I], a
+
     call AdvancePC
     jp game_loop
 
@@ -974,4 +968,26 @@ DecrementTimers:
     and a
     ret z
     dec [hl]
+    ret
+
+INCLUDE "memory.inc"
+
+wait_vblank:
+    halt
+    ret
+
+StartLCD:
+    ld a, LCDCF_ON|LCDCF_BG8000|LCDCF_BG9800|LCDCF_BGON|LCDCF_OBJ8|LCDCF_OBJON
+    ld [rLCDC], a
+    ret
+
+StopLCD:
+    ld a, [rLCDC]
+    rlca                ; Put the high bit of LCDC into the Carry flag
+    ret nc              ; Screen is off already. Exit.
+    call wait_vblank
+; Turn off the LCD
+    ld a, [rLCDC]
+    res 7, a            ; Reset bit 7 of LCDC
+    ld [rLCDC], a
     ret
