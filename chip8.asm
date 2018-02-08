@@ -398,8 +398,8 @@ Opcode7XNN:
     ld hl, REGISTERS
     ld a, d
     and a, $0F ; a = X
-    add a, h
-    ld h, a
+    add a, l
+    ld l, a
 
     ld a, e ; a = NN
 
