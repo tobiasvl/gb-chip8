@@ -776,10 +776,12 @@ get_map_position:
 
 OpcodeEX9E:
     ; TODO joypad
+    call AdvancePC
     jp game_loop
 
 OpcodeEXA1:
     ; TODO joypad
+    call AdvancePC
     jp game_loop
 
 OpcodeFX07:
@@ -797,6 +799,7 @@ OpcodeFX07:
 
 OpcodeFX0A:
     ; TODO joypad
+    call AdvancePC
     jp game_loop
 
 OpcodeFX15:
@@ -854,10 +857,12 @@ OpcodeFX1E:
 
 OpcodeFX29:
     ; TODO I = sprite_addr[VX]
+    call AdvancePC
     jp game_loop
 
 OpcodeFX33:
     ; TODO BCD
+    call AdvancePC
     jp game_loop
 
 OpcodeFX55:
@@ -888,6 +893,9 @@ OpcodeFX55:
     jp game_loop
 
 OpcodeFX65:
+    nop
+    call AdvancePC
+    jp game_loop
     ; dump I to registers V0–VX
     ; TODO
 ;
