@@ -301,9 +301,9 @@ Opcode1NNN:
     ; jump to address $NNN
     ld a, d
     and a, $0F
-    ld [rPC], a
-    ld a, e
     ld [rPC+1], a
+    ld a, e
+    ld [rPC], a
     jp game_loop
 
 Opcode2NNN:
