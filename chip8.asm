@@ -151,6 +151,8 @@ begin:
     ld hl, _VRAM
     ld bc, $9000-_VRAM
     call mem_SetVRAM
+    ld hl, rBGP
+    ld [hl], %11111100
     call StartLCD
 
     ; Registers start at 0
@@ -686,12 +688,17 @@ OpcodeBNNN:
     ld a, d
     and a, $0F
     ld d, a
-    
-    ; TODO
 
-    ld [hl], d
-    inc hl
-    ld [hl], e
+    ld hl, V0
+    ld l, [hl]
+    ld h, 0
+    add hl, de
+
+    ld a, d
+    ld [rPC+1], a
+    ld a, e
+    ld [rPC], a
+
     jp game_loop
 
 OpcodeCXNN:
