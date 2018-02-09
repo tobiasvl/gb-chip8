@@ -18,6 +18,28 @@ SECTION "FontSprites",ROM0[$0068]
 FONT_ROM:
 INCLUDE "font.inc"
 
+INCLUDE "memory.inc"
+
+wait_vblank:
+    halt
+    ret
+
+StartLCD:
+    ld a, LCDCF_ON|LCDCF_BG8000|LCDCF_BG9800|LCDCF_BGON|LCDCF_OBJ8|LCDCF_OBJON
+    ld [rLCDC], a
+    ret
+
+StopLCD:
+    ld a, [rLCDC]
+    rlca                ; Put the high bit of LCDC into the Carry flag
+    ret nc              ; Screen is off already. Exit.
+    call wait_vblank
+; Turn off the LCD
+    ld a, [rLCDC]
+    res 7, a            ; Reset bit 7 of LCDC
+    ld [rLCDC], a
+    ret
+
 SECTION    "start",ROM0[$0100]
 nop
 jp    begin
@@ -1058,26 +1080,4 @@ DecrementTimers:
     and a
     ret z
     dec [hl]
-    ret
-
-INCLUDE "memory.inc"
-
-wait_vblank:
-    halt
-    ret
-
-StartLCD:
-    ld a, LCDCF_ON|LCDCF_BG8000|LCDCF_BG9800|LCDCF_BGON|LCDCF_OBJ8|LCDCF_OBJON
-    ld [rLCDC], a
-    ret
-
-StopLCD:
-    ld a, [rLCDC]
-    rlca                ; Put the high bit of LCDC into the Carry flag
-    ret nc              ; Screen is off already. Exit.
-    call wait_vblank
-; Turn off the LCD
-    ld a, [rLCDC]
-    res 7, a            ; Reset bit 7 of LCDC
-    ld [rLCDC], a
     ret
