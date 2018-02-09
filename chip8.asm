@@ -811,12 +811,140 @@ get_map_position:
     ret
 
 OpcodeEX9E:
-    ; TODO joypad
+    ; Skip the following instruction if the key corresponding to
+    ; the hex value currently stored in register VX is pressed
+    ld hl, REGISTERS
+    ld a, d
+    and a, $0F ; a = X
+    add a, h
+    ld h, a ; hl = VX
+
+    call ReadJoyPad
+    ldh a,[hPadPressed]
+    and BUTTON_LEFT
+    jr nz, .left
+    ldh a,[hPadPressed]
+    and BUTTON_RIGHT
+    jr nz, .right
+    ldh a,[hPadPressed]
+    and BUTTON_UP
+    jr nz, .up
+    ldh a,[hPadPressed]
+    and BUTTON_DOWN
+    jr nz, .down
+    ldh a,[hPadPressed]
+    and BUTTON_A
+    jr nz, .a
+    ldh a,[hPadPressed]
+    and BUTTON_B
+    jr nz, .b
+    ldh a,[hPadPressed]
+    and BUTTON_START
+    jr nz, .start
+    ldh a,[hPadPressed]
+    and BUTTON_SELECT
+    jr nz, .select
+    jr .no_skip
+
+.left:
+    ld a, [KEYPAD_MAPPING.Left]
+    jr .done
+.right:
+    ld a, [KEYPAD_MAPPING.Right]
+    jr .done
+.up:
+    ld a, [KEYPAD_MAPPING.Up]
+    jr .done
+.down:
+    ld a, [KEYPAD_MAPPING.Down]
+    jr .done
+.a:
+    ld a, [KEYPAD_MAPPING.A]
+    jr .done
+.b:
+    ld a, [KEYPAD_MAPPING.B]
+    jr .done
+.start:
+    ld a, [KEYPAD_MAPPING.Start]
+    jr .done
+.select:
+    ld a, [KEYPAD_MAPPING.Select]
+    jr .done
+
+.done:
+    cp a, [hl]
+    jr nz, .no_skip
+    call AdvancePC
+.no_skip:
     call AdvancePC
     jp game_loop
 
 OpcodeEXA1:
-    ; TODO joypad
+    ; Skip the following instruction if the key corresponding to
+    ; the hex value currently stored in register VX is not pressed
+    ld hl, REGISTERS
+    ld a, d
+    and a, $0F ; a = X
+    add a, h
+    ld h, a ; hl = VX
+
+    call ReadJoyPad
+    ldh a,[hPadPressed]
+    and BUTTON_LEFT
+    jr nz, .left
+    ldh a,[hPadPressed]
+    and BUTTON_RIGHT
+    jr nz, .right
+    ldh a,[hPadPressed]
+    and BUTTON_UP
+    jr nz, .up
+    ldh a,[hPadPressed]
+    and BUTTON_DOWN
+    jr nz, .down
+    ldh a,[hPadPressed]
+    and BUTTON_A
+    jr nz, .a
+    ldh a,[hPadPressed]
+    and BUTTON_B
+    jr nz, .b
+    ldh a,[hPadPressed]
+    and BUTTON_START
+    jr nz, .start
+    ldh a,[hPadPressed]
+    and BUTTON_SELECT
+    jr nz, .select
+    jr .no_skip
+
+.left:
+    ld a, [KEYPAD_MAPPING.Left]
+    jr .done
+.right:
+    ld a, [KEYPAD_MAPPING.Right]
+    jr .done
+.up:
+    ld a, [KEYPAD_MAPPING.Up]
+    jr .done
+.down:
+    ld a, [KEYPAD_MAPPING.Down]
+    jr .done
+.a:
+    ld a, [KEYPAD_MAPPING.A]
+    jr .done
+.b:
+    ld a, [KEYPAD_MAPPING.B]
+    jr .done
+.start:
+    ld a, [KEYPAD_MAPPING.Start]
+    jr .done
+.select:
+    ld a, [KEYPAD_MAPPING.Select]
+    jr .done
+
+.done:
+    cp a, [hl]
+    jr z, .no_skip
+    call AdvancePC
+.no_skip:
     call AdvancePC
     jp game_loop
 
