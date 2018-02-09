@@ -112,9 +112,8 @@ SECTION "FontMemory", WRAM0[$C1B0]
 FONT:
 DS $50
 
-SECTION "Game", ROM0[$200]
-GAME_ROM:
-INCBIN "game.rom"
+SECTION "Game", ROM0[$1F8]
+INCLUDE "config.inc"
 
 SECTION "GameMemory", WRAM0[$C200]
 GAME:
@@ -813,7 +812,68 @@ OpcodeFX07:
     jp game_loop
 
 OpcodeFX0A:
-    ; TODO joypad
+    ; wait for keypress, store it in VX
+    ld hl, REGISTERS
+    ld a, d
+    and a, $0F ; a = X
+    add a, h
+    ld h, a ; hl = VX
+
+.wait:
+    call ReadJoyPad
+    ldh a,[hPadPressed]
+    and BUTTON_LEFT
+    jr nz, .left
+    ldh a,[hPadPressed]
+    and BUTTON_RIGHT
+    jr nz, .right
+    ldh a,[hPadPressed]
+    and BUTTON_UP
+    jr nz, .up
+    ldh a,[hPadPressed]
+    and BUTTON_DOWN
+    jr nz, .down
+    ldh a,[hPadPressed]
+    and BUTTON_A
+    jr nz, .a
+    ldh a,[hPadPressed]
+    and BUTTON_B
+    jr nz, .b
+    ldh a,[hPadPressed]
+    and BUTTON_START
+    jr nz, .start
+    ldh a,[hPadPressed]
+    and BUTTON_SELECT
+    jr nz, .select
+    jr .wait
+
+.left:
+    ld a, [KEYPAD_MAPPING.Left]
+    jr .done
+.right:
+    ld a, [KEYPAD_MAPPING.Right]
+    jr .done
+.up:
+    ld a, [KEYPAD_MAPPING.Up]
+    jr .done
+.down:
+    ld a, [KEYPAD_MAPPING.Down]
+    jr .done
+.a:
+    ld a, [KEYPAD_MAPPING.A]
+    jr .done
+.b:
+    ld a, [KEYPAD_MAPPING.B]
+    jr .done
+.start:
+    ld a, [KEYPAD_MAPPING.Start]
+    jr .done
+.select:
+    ld a, [KEYPAD_MAPPING.Select]
+    jr .done
+
+.done:
+    ld [hl], a
     call AdvancePC
     jp game_loop
 
