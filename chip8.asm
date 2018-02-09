@@ -15,6 +15,7 @@ SECTION    "p1thru4",ROM0[$0060]
     reti
 
 SECTION "FontSprites",ROM0[$0068]
+FONT_ROM:
 INCLUDE "font.inc"
 
 SECTION    "start",ROM0[$0100]
@@ -82,10 +83,7 @@ ReadJoyPad::
     ldh     [hPadReleased],a
     ret
 
-SECTION "Game", ROM0[$200]
-GAME: INCBIN "game.rom"
-
-SECTION "Registers", WRAM0
+SECTION "Registers", WRAM0[$C000]
 REGISTERS:
 V0 DB
 V1 DB
@@ -105,15 +103,28 @@ VE DB
 VF DB
 I DW
 rPC DW
-
-SECTION "Timers", WRAM0
+TIMERS:
 DELAY DB
 SOUND DB
 
-SECTION "Screen", WRAM0
-SCREEN DS (64 * 32) / 8
+SECTION "FontMemory", WRAM0[$C1B0]
+; The font will be copied here from ROM
+FONT:
+DS $50
 
-SECTION "Game logic", ROM0
+SECTION "Game", ROM0[$200]
+GAME_ROM:
+INCBIN "game.rom"
+
+SECTION "GameMemory", WRAM0[$C200]
+GAME:
+; The game will be copied here from ROM
+DS $0E00
+
+;SECTION "Screen", WRAM0
+;SCREEN DS (64 * 32) / 8
+
+SECTION "Interpreter", ROM0
 
 begin:
     ; Initialize stack
@@ -123,6 +134,19 @@ begin:
     ld a, IEF_VBLANK
     ld [rIE], a
     ei
+
+    ; Copy font from ROM to RAM
+    ; (I assume games should be able to change the font)
+    ld hl, FONT_ROM
+    ld de, FONT
+    ld bc, $50
+    call mem_Copy
+
+    ; Copy game from ROM to RAM
+    ld hl, GAME_ROM
+    ld de, GAME
+    ld bc, $0E00
+    call mem_Copy
 
     ; Initialize memory
     call StopLCD
@@ -142,13 +166,14 @@ begin:
     ld [hl+], a
     ENDR
     ld [I], a
+    ld [I+1], a
     ld [SOUND], a
     ld [DELAY], a
 
     ; PC starts at $200
     ld hl, rPC
     ld [hl+], a
-    ld [hl], $02
+    ld [hl], $C2
 
 game_loop:
     ; hl = PC
@@ -283,6 +308,7 @@ Opcode1NNN:
     ; jump to address $NNN
     ld a, d
     and a, $0F
+    add a, $C0
     ld [rPC+1], a
     ld a, e
     ld [rPC], a
@@ -292,6 +318,7 @@ Opcode2NNN:
     ; call address $NNN
     ld a, d
     and a, $0F
+    add a, $C0
     ld [rPC+1], a
     ld a, e
     ld [rPC], a
@@ -667,6 +694,7 @@ OpcodeBNNN:
     ; jump to address $NNN + V0
     ld a, d
     and a, $0F
+    add a, $C0
     ld d, a
 
     ld hl, V0
