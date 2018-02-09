@@ -899,58 +899,60 @@ OpcodeFX55:
     ld a, d
     and a, $0F ; a = X
     ld b, a    ; b = X counter
-    inc b
+
+    ld a, [I]
+    add a, $C0
+    ld d, a
+    ld a, [I+1]
+    add a, b
+    ld e, a
 
     ld hl, V0
-.loop:
-    push hl
-    ld hl, I
-    ld a, [hl+]
-    ld e, [hl]
-    ld d, a
-    pop hl
-    ld a, [hl]
-    ld [de], a
-    inc hl
-    ld a, h
-    ld [I], a
     ld a, l
-    ld [I+1], a
+    add a, b
+    ld l, a
+
+    inc b
+
+.loop:
+    ld a, [hl-]
+    ld [de], a
+    dec de
     dec b
     jr nz, .loop
+
     call AdvancePC
     jp game_loop
 
 OpcodeFX65:
-    nop
+    ; dump I to registers V0-VX
+    ld a, d
+    and a, $0F ; a = X
+    ld b, a    ; b = X counter
+
+    ld a, [I]
+    add a, $C0
+    ld h, a
+    ld a, [I+1]
+    add a, b
+    ld l, a
+
+    ld de, V0
+    ld a, e
+    add a, b
+    ld e, a
+
+    inc b
+
+.loop:
+    ld a, [hl-]
+    ld [de], a
+    dec de
+    dec b
+    jr nz, .loop
+
     call AdvancePC
     jp game_loop
-    ; dump I to registers V0–VX
-    ; TODO
-;
-;    ld a, d
-;    and a, $0F ; a = X
-;    ld b, a    ; b = X counter
-;    inc b
-;
-;    ld hl, V0
-;.loop:
-;    push hl
-;    ld hl, I
-;    ld a, [hl+]
-;    ld e, [hl]
-;    ld d, a
-;    pop hl
-;    ld a, [hl]
-;    ld [de], a
-;    inc hl
-;    ld a, h
-;    ld [I], a
-;    ld a, l
-;    ld [I+1], a
-;    dec b
-;    jr nz, .loop
-;    jp game_loop
 
 ReadPC:
     ; hl = PC
