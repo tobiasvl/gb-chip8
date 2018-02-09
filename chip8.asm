@@ -156,7 +156,7 @@ begin:
     ld bc, $9000-_VRAM
     call mem_SetVRAM
     ld hl, rBGP
-    ld [hl], %11111100
+    ld [hl], %00111111
     call StartLCD
 
     ; Registers start at 0
