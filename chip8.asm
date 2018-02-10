@@ -147,6 +147,8 @@ DS $0E00
 
 SECTION "Interpreter", ROM0
 
+INCLUDE "tiles.inc"
+
 begin:
     ; Initialize stack
     ld sp, $e000
@@ -175,7 +177,18 @@ begin:
     xor a
     ld hl, _VRAM
     ld bc, $9000-_VRAM
-    call mem_SetVRAM
+    call mem_Set
+
+    ld hl, TILES
+    ld de, _SCRN0
+    ld bc, (32*7) + 16
+    call mem_Copy
+
+    ld a, $FF
+    ld hl, $98F0
+    ld bc, _SCRN1-$98F0
+    call mem_Set
+
     ld hl, rBGP
     ld [hl], %00111111
     call StartLCD
