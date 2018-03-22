@@ -129,7 +129,7 @@ TIMERS:
 DELAY DB
 SOUND DB
 
-SECTION "FontMemory", WRAM0[$C1B0]
+SECTION "FontMemory", WRAM0[$C1B0] ; C050 ?
 ; The font will be copied here from ROM
 FONT:
 DS $50
@@ -769,7 +769,11 @@ OpcodeDXYN:
     add a, h
     ld h, a
     ld a, [hl]
-    ld b, a ; b = VX
+    ld d, a ; d = VX
+
+    ld a, e
+    and a, $0F
+    ld c, a    ; c = N
 
     ld hl, REGISTERS
     ld a, e
@@ -777,14 +781,30 @@ OpcodeDXYN:
     swap a ; a = Y
     add a, h
     ld a, [hl] ; a = VY
-    ld c, a ; c = VY
+    ld e, a ; e = VY
 
-    ld a, e
-    and a, $0F ; a = N
-
-    ld d, c
-    ld e, b
     call get_map_position
+
+    ; TODO
+;SLA C <- 0
+;SRA 1 -> C
+;SRL 0 -> C
+;
+;RL  C <- C
+;RLC C <- ?
+;RR  C -> C
+;RRC ? -> C
+;
+;RRA
+;jr c, .1
+;0:
+;SRL b
+;SRL b
+;1:
+;SRA b
+;SRA b
+;etter fire slike: dump b, bytt ut med neste byte
+;etter åtte slike: bytt ut a
 
     ld hl, I
 
@@ -795,15 +815,21 @@ get_map_position:
 ; from a sprite's pixel position, get the BG map address.
 ; d: Y pixel position
 ; e: X pixel position
-; hl: returned map address
-    push af
-
+; a: returned tile
     ld h, HIGH(_SCRN0) >> 2
 
+    sla d
+    sla e
+
     ; Y
-    ;ld a, [rSCY] ; account for scroll
+    ld a, [rSCY] ; account for scroll
     add a, d
+    ld d, a
     and $F8      ; snap to grid
+    push af
+    sub a, d
+    ld d, a
+    pop af
     add a, a
     rl h
     add a, a
@@ -811,16 +837,25 @@ get_map_position:
     ld l, a
 
     ; X
-    ;ld a, [rSCX] ; account for scroll
+    ld a, [rSCX] ; account for scroll
     add a, e
+    ld e, a
     and $F8      ; snap to grid
+    push af
+    sub a, e
+    ld e, a
+    pop af
     rrca
     rrca
     rrca
     add a, l
     ld l, a
 
-    pop af
+    ; hl is now tile address
+    ; c is still N
+    ;sla d   ; tile offset Y pixels (GB tiles use 2 bits per pixel)
+    ;sla e   ; tile offset X pixels --"--
+
     ret
 
 OpcodeEX9E:
